@@ -4,14 +4,14 @@ using System.Globalization;
 using System.Collections;
 using System.Linq;
 using UnityEngine.Rendering;
-using CamUnsnap.Pathing;
-using CamUnsnap.Lights;
-using CamUnsnap.Menu;
+using KappaCam.Pathing;
+using KappaCam.Lights;
+using KappaCam.Menu;
 
-namespace CamUnsnap.Menu
+namespace KappaCam.Menu
 {
 
-    public class CUSMenu : MonoBehaviour
+    public class KappaCamMenu : MonoBehaviour
     {
         public static bool Menu = false;
         private static Rect windowLight = new Rect(50, 50, 600, 600);
@@ -198,7 +198,7 @@ namespace CamUnsnap.Menu
             if (newSelectionIndex != currentSelectionIndex)
             {
                 currentSelectionIndex = newSelectionIndex;
-                CUSController.attachType = attachTypes[currentSelectionIndex];
+                KappaCamController.attachType = attachTypes[currentSelectionIndex];
             }
             GUILayout.EndHorizontal();
 

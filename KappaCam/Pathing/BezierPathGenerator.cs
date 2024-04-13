@@ -5,7 +5,7 @@ using System.Collections;
 using System.Linq;
 using UnityEngine.Rendering;
 
-namespace CamUnsnap.Pathing {
+namespace KappaCam.Pathing {
     public class BezierPathGenerator {
         public List<Vector3> keyframedPositions = new List<Vector3>();
         public List<Quaternion> keyframedRotations = new List<Quaternion>();

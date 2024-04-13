@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace CamUnsnap.Menu {
+namespace KappaCam.Menu {
     internal class utils {
         public static Vector3 Vector3Field(string label, Vector3 value) {
             GUILayout.BeginHorizontal();

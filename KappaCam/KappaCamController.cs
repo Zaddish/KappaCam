@@ -9,10 +9,7 @@ using MonoMod.RuntimeDetour;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-namespace CamUnsnap {
-
-
-
+namespace KappaCam {
     /// <summary>
     /// Represents a stream of positions and angles captured from a parent GameObject
     /// </summary>
@@ -64,7 +61,7 @@ namespace CamUnsnap {
     }
 
 
-    public class CUSController : MonoBehaviour {
+    public class KappaCamController : MonoBehaviour {
         public static bool mCamUnsnapped = false;
         bool Recording = false;
         bool playingPath = false;
@@ -203,15 +200,22 @@ namespace CamUnsnap {
                 UIEnabled = !UIEnabled;
 
             if (CamUnsnapped) {
-                if (Plugin.PlayerFollowCamera.Value) {
+                if (Plugin.PlayerFollowCamera.Value && player != null) {
                     player.Transform.position = gameCamera.transform.position;
                     player.Transform.rotation = gameCamera.transform.rotation;
                     GameObject playerMesh = player.gameObject.transform.Find("Player/Mesh").gameObject;
                     playerMesh.SetActive(false);
                 } 
             } else {
-                GameObject playerMesh = player.gameObject.transform.Find("Player/Mesh").gameObject;
-                playerMesh.SetActive(true);
+                if (CamViewInControl) {
+                    // if the user changed the value while the camera is still unsnapped
+                    GameObject playerMesh = player.gameObject.transform.Find("Player/Mesh").gameObject;
+                    playerMesh.SetActive(true);
+                } else {
+                    GameObject playerMesh = player.gameObject.transform.Find("Player/Mesh").gameObject;
+                    playerMesh.SetActive(true);
+                }
+                
             }
 
             // TODO: this will error when not in raid if enabled; not an issue atm, but something to fix later

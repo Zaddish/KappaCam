@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace CamUnsnap.Lights {
+namespace KappaCam.Lights {
     public class LightController {
         public GameObject selectedLightGameObject = null;
         public Light selectedLight = null;

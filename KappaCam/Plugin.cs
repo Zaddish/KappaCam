@@ -2,11 +2,11 @@
 using UnityEngine;
 using BepInEx.Configuration;
 using BepInEx.Logging;
-using CamUnsnap.Menu;
+using KappaCam.Menu;
 
-namespace CamUnsnap
+namespace KappaCam
 {
-    [BepInPlugin("com.kobrakon.camunsnap", "CamUnsnap", "1.0.0")]
+    [BepInPlugin("com.zaddish.kappacam", "KappaCam", "2.3.7")]
     public class Plugin : BaseUnityPlugin
     {
         private GameObject Hook;
@@ -139,11 +139,11 @@ namespace CamUnsnap
             OverrideGameRestriction = Config.Bind("Unsafe Options", "Override Session Restriction", false, "When enabled, the requirement for the player to be in a session is overridden, allowing access to the main camera whenever it's in use. However, options regarding player values and the such (immune in camera, move player, memory pos etc) are ignored until this option is disabled.\nThis option can result in bugs and artifacts, and while exceptions thrown by the CUS script are automatically handled, EFT is not so well programmed, and may react unpredictably.");
 
 
-            Hook = new GameObject("CUS");
-            Hook.AddComponent<CUSController>();
-            Hook.AddComponent<CUSMenu>();
+            Hook = new GameObject("KappaCam");
+            Hook.AddComponent<KappaCamController>();
+            Hook.AddComponent<KappaCamMenu>();
             DontDestroyOnLoad(Hook);
-            Logger.LogInfo($"Camera Unsnap Loaded");
+            Logger.LogInfo($"KappaCam Loaded");
         }
 
     }

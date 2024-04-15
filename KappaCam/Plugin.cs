@@ -6,7 +6,7 @@ using KappaCam.Menu;
 
 namespace KappaCam
 {
-    [BepInPlugin("com.zaddish.kappacam", "KappaCam", "2.3.7")]
+    [BepInPlugin("com.zaddish.kappacam", "KappaCam", "2.3.8")]
     public class Plugin : BaseUnityPlugin
     {
         private GameObject Hook;

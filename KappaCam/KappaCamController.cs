@@ -101,7 +101,7 @@ namespace KappaCam {
         public static float zoomVelocity = 0.8f;
         public static float zoomSmoothTime = 0.3f;
 
-        bool CamViewInControl { get; set; } = false;
+        bool CamViewInControl { get; set; } = true;
         Player player { get => gameWorld.MainPlayer; }
         GameWorld gameWorld { get => Singleton<GameWorld>.Instance; }
         float MovementSpeed { get => Plugin.MovementSpeed.Value; }

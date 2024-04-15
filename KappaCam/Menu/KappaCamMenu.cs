@@ -26,6 +26,9 @@ namespace KappaCam.Menu
         private BezierPathGenerator pathGenerator = new BezierPathGenerator();
         private int selectedKeyframeIndex = -1;
         private Coroutine pathPlaybackCoroutine = null;
+        private bool loopPlayback = false;
+        private bool isPaused = false;
+
 
 
         // Light settings for editing
@@ -84,6 +87,11 @@ namespace KappaCam.Menu
                 float t = 0f;
 
                 while (t < 1f) {
+                    if (isPaused) {
+                        yield return null;
+                        continue;
+                    }
+
                     Camera.main.transform.position = pathGenerator.CalculatePiecewiseBezierPath(t);
                     Camera.main.transform.rotation = pathGenerator.CalculateBezierQuaternion(t);
                     elapsedTime += Time.deltaTime;
@@ -91,23 +99,49 @@ namespace KappaCam.Menu
                     yield return null;
                 }
 
-                Camera.main.transform.position = pathGenerator.keyframedPositions[pathGenerator.keyframedPositions.Count - 1];
-                Camera.main.transform.rotation = pathGenerator.keyframedRotations[pathGenerator.keyframedRotations.Count - 1];
-                pathGenerator.isPathPlaying = false;
+                if (loopPlayback) {
+                    pathPlaybackCoroutine = StartCoroutine(MoveAlongSplinePath(pathGenerator.pathDuration));
+                } else {
+                    Camera.main.transform.position = pathGenerator.keyframedPositions[pathGenerator.keyframedPositions.Count - 1];
+                    Camera.main.transform.rotation = pathGenerator.keyframedRotations[pathGenerator.keyframedRotations.Count - 1];
+                    pathGenerator.isPathPlaying = false;
+                }
             }
 
             void TogglePathPlayback() {
                 if (pathGenerator.isPathPlaying) {
-                    Debug.Log("Path is already playing.");
+                    if (isPaused) {
+                        isPaused = false;
+                        Debug.Log("Path playback resumed.");
+                    } else {
+                        isPaused = true;
+                        Debug.Log("Path playback paused.");
+                    }
                 } else {
                     // Stop any existing playback coroutine as a precaution, even though we check isPathPlaying.
                     if (pathPlaybackCoroutine != null) {
                         StopCoroutine(pathPlaybackCoroutine);
                     }
                     pathPlaybackCoroutine = StartCoroutine(MoveAlongSplinePath(pathGenerator.pathDuration));
+                    pathGenerator.isPathPlaying = true;
+                    Debug.Log("Path playback started.");
                 }
             }
 
+            void StopPathPlayback() {
+                if (pathPlaybackCoroutine != null) {
+                    StopCoroutine(pathPlaybackCoroutine);
+                }
+                pathGenerator.isPathPlaying = false;
+                isPaused = false;
+                loopPlayback = false;
+                Debug.Log("Path playback stopped.");
+            }
+
+            void ToggleLoopPlayback() {
+                loopPlayback = !loopPlayback;
+                Debug.Log($"Path playback looping set to: {loopPlayback}");
+            }
 
             GUI.DragWindow(new Rect(0, 0, 10000, 20));
 
@@ -137,13 +171,22 @@ namespace KappaCam.Menu
 
             // Display a slider for adjusting path duration. This affects how quickly the camera moves along the path.
             GUILayout.Label($"Path Duration: {pathGenerator.pathDuration} seconds");
-            pathGenerator.pathDuration = GUILayout.HorizontalSlider(pathGenerator.pathDuration, 1.0f, 60.0f);
+            pathGenerator.pathDuration = GUILayout.HorizontalSlider(pathGenerator.pathDuration, 1.0f, 3600.0f);
 
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button(pathGenerator.isPathPlaying ? "Pause Path" : "Play Path"))
-            {
+
+            if (GUILayout.Button(pathGenerator.isPathPlaying ? (isPaused ? "Resume Path" : "Pause Path") : "Play Path")) {
                 TogglePathPlayback();
             }
+
+            if (GUILayout.Button("Stop Path")) {
+                StopPathPlayback();
+            }
+
+            if (GUILayout.Button(loopPlayback ? "Disable Loop" : "Enable Loop")) {
+                ToggleLoopPlayback();
+            }
+
             GUILayout.EndHorizontal();
 
             GUILayout.Label("Keyframed Positions and Rotations:");

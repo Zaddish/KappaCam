@@ -80,12 +80,15 @@ namespace KappaCam {
         TransformRecording PathRecording;
         int currentListIndex = 0;
         float cacheFOV = 0;
-
-        public static string attachType;
-        // attach specific can be "orbit", "lookAt" and "lock"
+        public enum attachTypes {
+            lookAt,
+            orbit,
+            parented,
+        }
+        // attach specific can be "orbit", "lookAt" and "parented"
         // orbit = rotate around the object in a linear motion
         // lookAt just forces the camera to always look at the attached object
-        // lock parents the game camera to the objects transformationa
+        // parented parents the game camera to the objects transformation
         public static string AttachSpecific = "";
         GameObject AttachedTarget;
 
@@ -101,7 +104,7 @@ namespace KappaCam {
         public static float zoomVelocity = 0.8f;
         public static float zoomSmoothTime = 0.3f;
 
-        bool CamViewInControl { get; set; } = true;
+        public static bool CamViewInControl { get; set; } = true;
         Player player { get => gameWorld.MainPlayer; }
         GameWorld gameWorld { get => Singleton<GameWorld>.Instance; }
         float MovementSpeed { get => Plugin.MovementSpeed.Value; }
@@ -417,12 +420,18 @@ namespace KappaCam {
                         gameCamera.transform.SetParent(null);
                         AttachedTarget = null;
                         AttachSpecific = "";
+                        if (Plugin.SelectedAttachType.Value != attachTypes.parented) {
+                            CamViewInControl = true;
+                        }
                         SendNotification("Detached");
                     } else if (Input.GetKey(Plugin.AttachCameraFollow.Value.MainKey) && AttachedTarget == null) {
                         Ray ray = new Ray(gameCamera.transform.position, gameCamera.transform.forward);
                         RaycastHit hit;
                         if (Physics.Raycast(ray, out hit, raycastDistance)) {
                             AttachedTarget = hit.collider.gameObject;
+                            if (Plugin.SelectedAttachType.Value == attachTypes.parented) {
+                                CamViewInControl = true;
+                            } else { CamViewInControl = false; }
                             SendNotification("Attached to: " + hit.collider.gameObject.name);
                         }
                     }
@@ -441,6 +450,9 @@ namespace KappaCam {
                         GameObject targetObject = GameObject.Find(AttachSpecific);
                         if (targetObject != null && AttachedTarget == null) {
                             AttachedTarget = targetObject;
+                            if (Plugin.SelectedAttachType.Value == attachTypes.parented) {
+                                CamViewInControl = true;
+                            } else { CamViewInControl = false; }
                             SendNotification("Attached to: " + AttachedTarget.gameObject.name, false);
                         } else if (targetObject == null) {
                             AttachSpecific = "";
@@ -449,11 +461,11 @@ namespace KappaCam {
                     }
 
                     if (AttachedTarget != null && AttachedTarget.transform.position != null) {
-                        if (attachType == "orbit") {
+                        if (Plugin.SelectedAttachType.Value == attachTypes.orbit) {
                             gameCamera.transform.RotateAround(AttachedTarget.transform.position, Vector3.up, Time.deltaTime * MovementSpeed);
 
 
-                        } else if (attachType == "lookAt" && AttachedTarget != null) {
+                        } else if (Plugin.SelectedAttachType.Value == attachTypes.lookAt && AttachedTarget != null) {
                             Vector3 targetPosition = AttachedTarget.gameObject.transform.position + new Vector3(0.0f, verticalFocusAdjustment, 0.0f);
                             Vector3 directionToTarget = targetPosition - gameCamera.transform.position;
                             Quaternion targetRotation = Quaternion.LookRotation(directionToTarget);
@@ -469,7 +481,7 @@ namespace KappaCam {
                                 gameCamera.transform.rotation = Quaternion.Lerp(gameCamera.transform.rotation, targetRotation, correctionFactor * Time.deltaTime);
                             }
 
-                        } else if (attachType == "lock") {
+                        } else if (Plugin.SelectedAttachType.Value == attachTypes.parented) {
                             Vector3 cameraWorldPosition = gameCamera.transform.position;
                             Quaternion cameraWorldRotation = gameCamera.transform.rotation;
 

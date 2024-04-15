@@ -63,8 +63,8 @@ namespace KappaCam
         
         internal static ConfigEntry<float> LookAtDamp;
         internal static ConfigEntry<float> LookAtEscapeThreshold;
-        
         internal static ConfigEntry<int> CameraFOV;
+        public static ConfigEntry<KappaCamController.attachTypes> SelectedAttachType { get; set; }
 
         internal static ConfigEntry<bool> Godmode;
         internal static ConfigEntry<bool> PlayerFollowCamera;
@@ -123,6 +123,7 @@ namespace KappaCam
             Godmode = Config.Bind(UtilitySection, "God mode", true, "Makes the player unkillable");
             FastMoveMult = Config.Bind(UtilitySection, "Set Fast Movement Multiplier", 2f, new ConfigDescription("The value that the camera movement speed is multiplied by while the move fast key is held", new AcceptableValueRange<float>(0f, 100f)));
             PlayerFollowCamera = Config.Bind(UtilitySection, "Player Follows Camera (culling)", false, "The player will be put behind the camera so that culling works for the camera pos");
+            SelectedAttachType = Config.Bind(UtilitySection, "Attach Type", KappaCamController.attachTypes.lookAt, new ConfigDescription("The attachment type when locking onto objects in game."));
             
             /// RecordingSection
             BeginRecord = Config.Bind(RecordingSection, "Begin Path Recording", new KeyboardShortcut(KeyCode.LeftBracket), "Begins recording camera movement");

@@ -17,7 +17,7 @@ namespace KappaCam.Menu
         private static Rect windowLight = new Rect(50, 50, 600, 600);
         private static Rect windowPathing = new Rect(650, 50, 1200, 1000);
 
-        private readonly string[] attachTypes = new string[] { "lookAt", "orbit", "lock" };
+       
         private int currentSelectionIndex = 0;
         private Vector2 scrollPosition = Vector2.zero;
 
@@ -28,7 +28,7 @@ namespace KappaCam.Menu
         private Coroutine pathPlaybackCoroutine = null;
         private bool loopPlayback = false;
         private bool isPaused = false;
-
+        private bool cacheCamcontrol;
 
 
         // Light settings for editing
@@ -47,6 +47,7 @@ namespace KappaCam.Menu
             if (Input.GetKeyDown(Plugin.CreateKeyframe.Value.MainKey)) {
                 pathGenerator.AddKeyframe(Camera.main.transform.position, Camera.main.transform.rotation);
             }
+
         }
         /// <TODO>
         /// Somehow fix the mouse flickering when menu is open
@@ -120,10 +121,12 @@ namespace KappaCam.Menu
                 } else {
                     // Stop any existing playback coroutine as a precaution, even though we check isPathPlaying.
                     if (pathPlaybackCoroutine != null) {
+                        KappaCamController.CamViewInControl = true;
                         StopCoroutine(pathPlaybackCoroutine);
                     }
                     pathPlaybackCoroutine = StartCoroutine(MoveAlongSplinePath(pathGenerator.pathDuration));
                     pathGenerator.isPathPlaying = true;
+                    KappaCamController.CamViewInControl = false;
                     Debug.Log("Path playback started.");
                 }
             }
@@ -135,6 +138,7 @@ namespace KappaCam.Menu
                 pathGenerator.isPathPlaying = false;
                 isPaused = false;
                 loopPlayback = false;
+                KappaCamController.CamViewInControl = true;
                 Debug.Log("Path playback stopped.");
             }
 
@@ -231,20 +235,6 @@ namespace KappaCam.Menu
         void CUSLight(int windowID)
         {
             GUI.DragWindow(new Rect(0, 0, 10000, 20));
-
-            GUILayout.BeginVertical();
-            GUILayout.Label("Attach Settings", GUILayout.ExpandWidth(true));
-
-            GUILayout.BeginHorizontal();
-            GUILayout.Label("Attach Type:");
-            int newSelectionIndex = GUILayout.SelectionGrid(currentSelectionIndex, attachTypes, attachTypes.Length);
-            if (newSelectionIndex != currentSelectionIndex)
-            {
-                currentSelectionIndex = newSelectionIndex;
-                KappaCamController.attachType = attachTypes[currentSelectionIndex];
-            }
-            GUILayout.EndHorizontal();
-
 
             // Light creation UI
             GUILayout.Label("Light Settings", GUILayout.ExpandWidth(true));

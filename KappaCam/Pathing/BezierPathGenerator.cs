@@ -199,28 +199,5 @@ namespace KappaCam.Pathing {
 
             return tempRotations[0];
         }
-        public Quaternion CalculateBezierRotation(float t) {
-            if (keyframedRotations.Count < 2) {
-                return Quaternion.identity;
-            }
-
-            // nnormalize t to the number of segments
-            float totalSegments = keyframedPositions.Count - 1;
-            float segmentIndexFloat = t * totalSegments;
-            int segmentIndex = Mathf.FloorToInt(segmentIndexFloat);
-
-            // clamp to ensure we don't exceed bounds
-            segmentIndex = Mathf.Clamp(segmentIndex, 0, keyframedRotations.Count - 2);
-            float segmentT = segmentIndexFloat - segmentIndex;
-
-            // determine the rotations for the current segment
-            Quaternion startRot = keyframedRotations[segmentIndex];
-            Quaternion endRot = keyframedRotations[segmentIndex + 1];
-
-            // spherical interpolation for smooth rotation cause normal slerp is shit
-            Quaternion interpolatedRotation = Quaternion.Slerp(startRot, endRot, segmentT);
-
-            return interpolatedRotation;
-        }
     }
 }

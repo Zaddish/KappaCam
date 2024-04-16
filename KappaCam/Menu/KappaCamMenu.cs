@@ -7,7 +7,7 @@ using UnityEngine.Rendering;
 using KappaCam.Pathing;
 using KappaCam.Lights;
 using KappaCam.Menu;
-
+using System.IO;
 namespace KappaCam.Menu
 {
 
@@ -17,10 +17,7 @@ namespace KappaCam.Menu
         private static Rect windowLight = new Rect(50, 50, 600, 600);
         private static Rect windowPathing = new Rect(650, 50, 1200, 1000);
 
-       
-        private int currentSelectionIndex = 0;
         private Vector2 scrollPosition = Vector2.zero;
-
 
         // pathing shit
         private BezierPathGenerator pathGenerator = new BezierPathGenerator();
@@ -28,7 +25,6 @@ namespace KappaCam.Menu
         private Coroutine pathPlaybackCoroutine = null;
         private bool loopPlayback = false;
         private bool isPaused = false;
-        private bool cacheCamcontrol;
 
 
         // Light settings for editing
@@ -71,14 +67,14 @@ namespace KappaCam.Menu
             {
                 Cursor.visible = true;
                 Cursor.lockState = CursorLockMode.Confined;
-                windowLight = GUI.Window(0, windowLight, CUSLight, "CUS Menu");
+                windowLight = GUI.Window(0, windowLight, CUSLight, "Light Menu");
                 windowPathing = GUI.Window(1, windowPathing, CUSPathing, "Bézier Curve Paths");
             }
         }
 
-        
 
-       
+
+
 
         private void CUSPathing(int windowID)
         {
@@ -236,8 +232,6 @@ namespace KappaCam.Menu
         {
             GUI.DragWindow(new Rect(0, 0, 10000, 20));
 
-            // Light creation UI
-            GUILayout.Label("Light Settings", GUILayout.ExpandWidth(true));
             GUILayout.BeginHorizontal();
 
             GUILayout.Label("Light Name:");
@@ -264,7 +258,6 @@ namespace KappaCam.Menu
                 lightController.CreateLight(lightName, lightController.selectedLightType, lightController.lightColor, lightController.lightIntensity, lightController.lightRange);
             }
 
-            GUILayout.EndVertical();
 
             if (lightController.selectedLightGameObject != null)
             {

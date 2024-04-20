@@ -1,12 +1,27 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Globalization;
 using UnityEngine;
+using Aki.Reflection.Utils;
+using EFT.UI;
+using System.Linq;
+using System.Reflection;
 
 namespace KappaCam.Menu {
+
+    // thank you SamSWAT <3 u da bestest
+    static class CursorSettings {
+        private static readonly MethodInfo setCursorMethod;
+
+        static CursorSettings() {
+            var cursorType = PatchConstants.EftTypes.Single(x => x.GetMethod("SetCursor") != null);
+            setCursorMethod = cursorType.GetMethod("SetCursor");
+        }
+
+        public static void SetCursor(ECursorType type) {
+            setCursorMethod.Invoke(null, new object[] { type });
+        }
+    }
+
+
     internal class utils {
         public static Vector3 Vector3Field(string label, Vector3 value) {
             GUILayout.BeginHorizontal();

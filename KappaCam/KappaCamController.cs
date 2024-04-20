@@ -210,19 +210,19 @@ namespace KappaCam {
                     playerMesh.SetActive(false);
                 } 
             } else {
-                if (CamViewInControl) {
-                    // if the user changed the value while the camera is still unsnapped
-                    GameObject playerMesh = player.gameObject.transform.Find("Player/Mesh").gameObject;
-                    playerMesh.SetActive(true);
-                } else {
-                    GameObject playerMesh = player.gameObject.transform.Find("Player/Mesh").gameObject;
-                    playerMesh.SetActive(true);
-                }
-                
+                try { 
+                    if (CamViewInControl) {
+                        // if the user changed the value while the camera is still unsnapped
+                        GameObject playerMesh = player.gameObject.transform.Find("Player/Mesh").gameObject;
+                        playerMesh.SetActive(true);
+                    } else {
+                        GameObject playerMesh = player.gameObject.transform.Find("Player/Mesh").gameObject;
+                        playerMesh.SetActive(true);
+                    }
+                } catch { }
             }
 
-            // TODO: this will error when not in raid if enabled; not an issue atm, but something to fix later
-            if (Plugin.Godmode.Value == true) { player.ActiveHealthController.SetDamageCoeff(Plugin.Godmode.Value ? 0 : player.ActiveHealthController.DamageCoeff != 1 && !playerAirborne ? 1 : 0); }
+            try { if (Plugin.Godmode.Value == true) { player.ActiveHealthController.SetDamageCoeff(Plugin.Godmode.Value ? 0 : player.ActiveHealthController.DamageCoeff != 1 && !playerAirborne ? 1 : 0); } } catch { }
 
 
             if (CamUnsnapped) {
@@ -232,12 +232,7 @@ namespace KappaCam {
                     float fastMove = Input.GetKey(Plugin.FastMove.Value.MainKey) ? Plugin.FastMoveMult.Value : 1f;
                     gameCamera = Camera.current.gameObject;
 
-                    
-                    
-
-
                     if (!Plugin.OverrideGameRestriction.Value && Ready()) {
-
 
                         // ------ RECORDING STUFF ------
                         if (PathRecording.Target == null) {

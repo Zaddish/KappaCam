@@ -6,7 +6,7 @@ using KappaCam.Menu;
 
 namespace KappaCam
 {
-    [BepInPlugin("com.zaddish.kappacam", "KappaCam", "2.3.8")]
+    [BepInPlugin("com.zaddish.kappacam", "KappaCam", "2.3.9")]
     public class Plugin : BaseUnityPlugin
     {
         private GameObject Hook;
@@ -66,6 +66,7 @@ namespace KappaCam
         internal static ConfigEntry<int> CameraFOV;
         public static ConfigEntry<KappaCamController.attachTypes> SelectedAttachType { get; set; }
 
+        //internal static ConfigEntry<bool> disableCulling;
         internal static ConfigEntry<bool> Godmode;
         internal static ConfigEntry<bool> PlayerFollowCamera;
         internal static ConfigEntry<bool> RotateUsesSens;
@@ -124,7 +125,7 @@ namespace KappaCam
             FastMoveMult = Config.Bind(UtilitySection, "Set Fast Movement Multiplier", 2f, new ConfigDescription("The value that the camera movement speed is multiplied by while the move fast key is held", new AcceptableValueRange<float>(0f, 100f)));
             PlayerFollowCamera = Config.Bind(UtilitySection, "Player Follows Camera (culling)", false, "The player will be put behind the camera so that culling works for the camera pos");
             SelectedAttachType = Config.Bind(UtilitySection, "Attach Type", KappaCamController.attachTypes.lookAt, new ConfigDescription("The attachment type when locking onto objects in game."));
-            
+            // disableCulling = Config.Bind(UtilitySection, "Disable / Enable Culling", false, "Disable the culling on the camera");
             /// RecordingSection
             BeginRecord = Config.Bind(RecordingSection, "Begin Path Recording", new KeyboardShortcut(KeyCode.LeftBracket), "Begins recording camera movement");
             ResumeRecord = Config.Bind(RecordingSection, "Continue Path Recording", new KeyboardShortcut(KeyCode.Backslash), "Resumes recording and appends it to the previous recording");

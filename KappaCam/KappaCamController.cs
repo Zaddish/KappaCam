@@ -8,6 +8,7 @@ using EFT.Communications;
 using MonoMod.RuntimeDetour;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Koenigz.PerfectCulling;
 
 namespace KappaCam {
     /// <summary>
@@ -121,6 +122,8 @@ namespace KappaCam {
         GameObject preloaderUI { get => MonoBehaviourSingleton<PreloaderUI>.Instance.gameObject; }
         GameObject gameScene { get => MonoBehaviourSingleton<GameUI>.Instance.gameObject; }
 
+        //private DisablerCullingObjectBase[] allCullingObjects;
+        //private List<PerfectCullingBakeGroup> previouslyActiveBakeGroups = new List<PerfectCullingBakeGroup>();
 
 
         bool GamespeedChanged {
@@ -185,8 +188,11 @@ namespace KappaCam {
                 GUI.Label(new Rect(centerPoint.x - 50, centerPoint.y + 20, 100, 20), hitObjectName);
             }
         }
-
         void Update() {
+            //if (Input.GetKeyDown(KeyCode.C)) {
+            //    allCullingObjects = FindObjectsOfType<DisablerCullingObjectBase>();
+            //    ToggleCulling();
+            //}
 
             if (Input.GetKeyDown(Plugin.ToggleCameraSnap.Value.MainKey)) {
 
@@ -519,6 +525,14 @@ namespace KappaCam {
             }
             player.ActiveHealthController.SetDamageCoeff(1);
         }
+
+        //public void ToggleCulling() {
+        //    bool isEnabled = allCullingObjects.Any(co => co.gameObject.activeSelf);
+        //    foreach (var cullingObject in allCullingObjects) {
+        //        cullingObject.gameObject.SetActive(!isEnabled);
+        //    }
+        //}
+
 
         void SendNotification(string message, bool warn = true) => NotificationManagerClass.DisplayMessageNotification(message, ENotificationDurationType.Long, warn ? ENotificationIconType.Alert : ENotificationIconType.Default);
 

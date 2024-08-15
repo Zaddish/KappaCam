@@ -74,6 +74,7 @@ namespace KappaCam.Menu {
     public class KappaCamMenu : MonoBehaviour {
         private Window lightMenuWindow;
         private Window pathMenuWindow;
+        //private Window prefabMenuWindow;
         private bool windowOpen;
         private static GameObject input;
         private bool cursorSet = false;
@@ -81,12 +82,15 @@ namespace KappaCam.Menu {
         void Start() {
             LightMenu lightMenu = new GameObject("LightMenu").AddComponent<LightMenu>();
             PathingMenu pathMenu = new GameObject("PathingMenu").AddComponent<PathingMenu>();
+            //PrefabMenu prefabMenu = new GameObject("PrefabMenu").AddComponent<PrefabMenu>();
 
             lightMenuWindow = new Window(new Rect(50, 50, 600, 600), "Light Menu", lightMenu.Menu);
             pathMenuWindow = new Window(new Rect(700, 50, 1200, 1000), "Pathing Menu", pathMenu.Menu);
+            //prefabMenuWindow = new Window(new Rect(50, 650, 600, 600), "Prefab Menu", prefabMenu.Menu);
 
             DontDestroyOnLoad(lightMenu);
             DontDestroyOnLoad(pathMenu);
+            //DontDestroyOnLoad(prefabMenu);
         }
 
         void Update() {
@@ -115,12 +119,16 @@ namespace KappaCam.Menu {
                 if (GUILayout.Button("Bézier Curve Paths", GUILayout.MaxWidth(140))) {
                     pathMenuWindow.Toggle();
                 }
+                //if (GUILayout.Button("Prefab Menu")) {
+                //    prefabMenuWindow.Toggle();
+                //}
 
                 GUILayout.EndHorizontal();
                 GUILayout.EndArea();
 
                 lightMenuWindow.Render(1);
                 pathMenuWindow.Render(2);
+                //prefabMenuWindow.Render(3);
                 cursorSet = false;
             } else {
                 if (!cursorSet) {

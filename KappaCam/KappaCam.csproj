@@ -11,11 +11,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Reference Include="Aki.Common">
-      <HintPath>$(SolutionDir)dependencies\Aki.Common.dll</HintPath>
+    <Reference Include="Spt.Common">
+      <HintPath>$(SolutionDir)dependencies\spt-common.dll</HintPath>
     </Reference>
-    <Reference Include="Aki.Reflection">
-      <HintPath>$(SolutionDir)dependencies\Aki.Reflection.dll</HintPath>
+    <Reference Include="Spt.Reflection">
+      <HintPath>$(SolutionDir)dependencies\spt-reflection.dll</HintPath>
     </Reference>
     <Reference Include="Assembly-CSharp">
       <HintPath>$(SolutionDir)dependencies\Assembly-CSharp.dll</HintPath>
@@ -31,6 +31,9 @@
     </Reference>
     <Reference Include="UnityEngine">
       <HintPath>$(SolutionDir)dependencies\UnityEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.AssetBundleModule">
+      <HintPath>$(SolutionDir)dependencies\UnityEngine.AssetBundleModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.IMGUIModule">
       <HintPath>$(SolutionDir)dependencies\UnityEngine.IMGUIModule.dll</HintPath>

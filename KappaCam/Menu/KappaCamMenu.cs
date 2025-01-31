@@ -50,8 +50,16 @@ namespace KappaCam.Menu {
         }
 
         private Rect ResizeWindow(Rect windowRect, ref bool isResizing, ref Vector2 resizeStart) {
-            Vector2 mouse = GUIUtility.ScreenToGUIPoint(new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y));
-            Rect resizeHandle = new Rect(windowRect.x + windowRect.width - 20, windowRect.y + windowRect.height - 20, 20, 20);
+            Vector2 mouse = GUIUtility.ScreenToGUIPoint(
+                new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y)
+            );
+
+            Rect resizeHandle = new Rect(
+                windowRect.x + windowRect.width - 20,
+                windowRect.y + windowRect.height - 20,
+                20,
+                20
+            );
 
             if (Event.current.type == EventType.MouseDown && resizeHandle.Contains(mouse)) {
                 isResizing = true;
@@ -74,7 +82,7 @@ namespace KappaCam.Menu {
     public class KappaCamMenu : MonoBehaviour {
         private Window lightMenuWindow;
         private Window pathMenuWindow;
-        //private Window prefabMenuWindow;
+        private Window prefabMenuWindow;
         private bool windowOpen;
         private static GameObject input;
         private bool cursorSet = false;
@@ -82,33 +90,57 @@ namespace KappaCam.Menu {
         void Start() {
             LightMenu lightMenu = new GameObject("LightMenu").AddComponent<LightMenu>();
             PathingMenu pathMenu = new GameObject("PathingMenu").AddComponent<PathingMenu>();
-            //PrefabMenu prefabMenu = new GameObject("PrefabMenu").AddComponent<PrefabMenu>();
-
-            lightMenuWindow = new Window(new Rect(50, 50, 600, 600), "Light Menu", lightMenu.Menu);
-            pathMenuWindow = new Window(new Rect(700, 50, 1200, 1000), "Pathing Menu", pathMenu.Menu);
-            //prefabMenuWindow = new Window(new Rect(50, 650, 600, 600), "Prefab Menu", prefabMenu.Menu);
+            PrefabMenu prefabMenu = new GameObject("PrefabMenu").AddComponent<PrefabMenu>();
 
             DontDestroyOnLoad(lightMenu);
             DontDestroyOnLoad(pathMenu);
-            //DontDestroyOnLoad(prefabMenu);
+            DontDestroyOnLoad(prefabMenu);
+
+            lightMenuWindow = new Window(new Rect(50, 50, 600, 600), "Light Menu", lightMenu.Menu);
+            pathMenuWindow = new Window(new Rect(700, 50, 1200, 1000), "Pathing Menu", pathMenu.Menu);
+            prefabMenuWindow = new Window(
+                new Rect(50, 650, 600, 600),
+                "Prefab Menu",
+                prefabMenu.Menu
+            );
         }
 
         void Update() {
+            if (windowOpen && Input.GetKeyUp(KeyCode.Escape)) {
+                windowOpen = false;
+                if (input != null) {
+                    input.SetActive(true);
+                }
+            }
             if (Input.GetKeyDown(Plugin.MenuButton.Value.MainKey)) {
                 windowOpen = !windowOpen;
-                cursorSet = false;
                 if (input == null) {
                     input = GameObject.Find("___Input");
+                }
+                if (windowOpen) {
+                    Cursor.visible = true;
+                    CursorSettings.SetCursor(ECursorType.Idle);
+                    Cursor.lockState = CursorLockMode.None;
+                    if (input != null)
+                    {
+                        input.SetActive(false);
+                    }
+                }
+                else
+                {
+                    CursorSettings.SetCursor(ECursorType.Invisible);
+                    Cursor.lockState = CursorLockMode.Locked;
+                    Cursor.visible = false;
+                    if (input != null)
+                    {
+                        input.SetActive(true);
+                    }
                 }
             }
         }
 
         void OnGUI() {
             if (windowOpen) {
-                Cursor.visible = true;
-                CursorSettings.SetCursor(ECursorType.Idle);
-                Cursor.lockState = CursorLockMode.None;
-
                 GUILayout.BeginArea(new Rect(10, 10, Screen.width - 20, 30));
                 GUILayout.BeginHorizontal();
 
@@ -119,16 +151,16 @@ namespace KappaCam.Menu {
                 if (GUILayout.Button("Bézier Curve Paths", GUILayout.MaxWidth(140))) {
                     pathMenuWindow.Toggle();
                 }
-                //if (GUILayout.Button("Prefab Menu")) {
-                //    prefabMenuWindow.Toggle();
-                //}
 
+                if (GUILayout.Button("Prefab Menu", GUILayout.MaxWidth(100))) {
+                    prefabMenuWindow.Toggle();
+                }
                 GUILayout.EndHorizontal();
                 GUILayout.EndArea();
 
                 lightMenuWindow.Render(1);
                 pathMenuWindow.Render(2);
-                //prefabMenuWindow.Render(3);
+                prefabMenuWindow.Render(3);
                 cursorSet = false;
             } else {
                 if (!cursorSet) {
@@ -140,6 +172,4 @@ namespace KappaCam.Menu {
             }
         }
     }
-
-
 }

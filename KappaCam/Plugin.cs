@@ -6,7 +6,7 @@ using KappaCam.Menu;
 
 namespace KappaCam
 {
-    [BepInPlugin("com.zaddish.kappacam", "KappaCam", "2.3.9")]
+    [BepInPlugin("com.zaddish.kappacam", "KappaCam", "2.4.0")]
     public class Plugin : BaseUnityPlugin
     {
         private GameObject Hook;
@@ -48,6 +48,7 @@ namespace KappaCam
         internal static ConfigEntry<KeyboardShortcut> PlayRecord;
         internal static ConfigEntry<KeyboardShortcut> MenuButton;
         internal static ConfigEntry<KeyboardShortcut> CreateKeyframe;
+        internal static ConfigEntry<KeyboardShortcut> disableCulling;
 
         internal static ConfigEntry<float> Gamespeed;
         internal static ConfigEntry<float> MovementSpeed;
@@ -56,8 +57,6 @@ namespace KappaCam
         internal static ConfigEntry<float> CameraSmoothing;
         internal static ConfigEntry<float> FastMoveMult;
         internal static ConfigEntry<float> raycastDistance;
-        internal static ConfigEntry<float> zoomVelocity;
-        internal static ConfigEntry<float> zoomSmoothTime;
         internal static ConfigEntry<float> speedAdjustmentFactor;
         internal static ConfigEntry<float> Friction;
         
@@ -66,9 +65,8 @@ namespace KappaCam
         internal static ConfigEntry<int> CameraFOV;
         public static ConfigEntry<KappaCamController.attachTypes> SelectedAttachType { get; set; }
 
-        //internal static ConfigEntry<bool> disableCulling;
         internal static ConfigEntry<bool> Godmode;
-        internal static ConfigEntry<bool> PlayerFollowCamera;
+        internal static ConfigEntry<bool> AttachableCrosshair;
         internal static ConfigEntry<bool> RotateUsesSens;
         internal static ConfigEntry<bool> OverrideGameRestriction;
 
@@ -96,21 +94,19 @@ namespace KappaCam
             ResetRotation = Config.Bind(CameraSection, "Reset Rotation", new KeyboardShortcut(KeyCode.Minus), "Resets camera rotation back to 0");
             FastMove = Config.Bind(CameraSection, "Move Fast", new KeyboardShortcut(KeyCode.LeftShift), "Makes the camera move faster when held\nBasically like sprinting");
             CameraFOV = Config.Bind(CameraSection, "Camera FOV", 75, new ConfigDescription("The FOV value of the camera while unsnaped", new AcceptableValueRange<int>(1, 200)));
-            zoomVelocity = Config.Bind(CameraSection, "Zoom Velocity", 0.8f, new ConfigDescription("used to smooth out the zoom transition", new AcceptableValueRange<float>(0.00001f, 5.0f)));
-            zoomSmoothTime = Config.Bind(CameraSection, "Zoom Time", 0.3f, new ConfigDescription("Time taken to smooth the transition", new AcceptableValueRange<float>(0.000001f, 5.0f)));
             speedAdjustmentFactor = Config.Bind(CameraSection, "Movement Speed Mouse Wheel", 3.0f, new ConfigDescription("When you have the Speed Key Held, how fast do you want the speed to change when scrolling the mouse?", new AcceptableValueRange<float>(0.1f, 10.0f)));
             Friction = Config.Bind(CameraSection, "Movement Smoothing", 0.992f, new ConfigDescription("The amount of smoothing applied to the movement of the camera when unsnapped", new AcceptableValueRange<float>(0.00001f, 0.99999f)));
             MovementSpeed = Config.Bind(CameraSection, "CameraMoveSpeed", 10f, new ConfigDescription("How fast you want the camera to move", new AcceptableValueRange<float>(0.01f, 100f)));
-            ZoomSpeed = Config.Bind(CameraSection, "Camera FOV Zoom speed", 50f, new ConfigDescription("How fast you want to zoom in whilst the zoom key is held", new AcceptableValueRange<float>(0.01f, 1000f)));
+            ZoomSpeed = Config.Bind(CameraSection, "Camera FOV Zoom speed", 1f, new ConfigDescription("How fast you want to zoom in whilst the zoom key is held", new AcceptableValueRange<float>(0.01f, 1000f)));
             CameraSensitivity = Config.Bind(CameraSection, "Camera Sensitivity", 10f, new ConfigDescription("How fast you want the camera viewport to move while slaved", new AcceptableValueRange<float>(0.0f, 100f)));
             CameraSmoothing = Config.Bind(CameraSection, "Mouse Smoothing", 10f, new ConfigDescription("The amount of smoothing you want applied to the mouse in camera mode. (Lower is smoother)", new AcceptableValueRange<float>(0.0001f, 1f)));
-            RotateUsesSens = Config.Bind(UtilitySection, "Rotation speed inherits Camera Sensitivity", false, "If true, the camera rotation speed is multiplied by the Camera Sensitivity value, otherwise, the camera is rotated by only 1 degree per frame");
 
             /// GameSection
             ChangeGamespeed = Config.Bind(GameSection, "Change Gamespeed", new KeyboardShortcut(KeyCode.Tilde), "Toggle that sets the gamespeed to what you set using the gamespeed slider");
-            Gamespeed = Config.Bind(GameSection, "Set Gamespeed", 1f, new ConfigDescription("What gamespeed you want to set the gameworld to when pressing the Change Gamespeed bind !WARNING! Changing the gamespeed for too long can cause weird (but temporary) side effects", new AcceptableValueRange<float>(0f, 1f)));
+            Gamespeed = Config.Bind(GameSection, "Set Gamespeed", 1f, new ConfigDescription("What gamespeed you want to set the gameworld to when pressing the Change Gamespeed bind !WARNING! Changing the gamespeed for too long can cause weird (but temporary) side effects", new AcceptableValueRange<float>(0f, 5f)));
 
             /// UtilitySection
+            disableCulling = Config.Bind(GameSection, "Toggle culling", new KeyboardShortcut(KeyCode.ScrollLock), "Toggle culling when camera is unsnapped.");
             RememberPos = Config.Bind(UtilitySection, "Remember Camera Position", new KeyboardShortcut(KeyCode.O), "Save the camera's current Vector3 position.");
             GoToPos = Config.Bind(UtilitySection, "Go to Memory Position", new KeyboardShortcut(KeyCode.P), "Moves the camera to the last remembered Vector3 position.");
             MovePlayerToCam = Config.Bind(UtilitySection, "Move Player to Camera Position", new KeyboardShortcut(KeyCode.RightAlt), "Moves the player to the camera's position.");
@@ -120,12 +116,12 @@ namespace KappaCam
             AdvanceList = Config.Bind(UtilitySection, "Advance Memory List Position", new KeyboardShortcut(KeyCode.Greater), "Changes the camera's position to the next position contained in the list");
             ClearList = Config.Bind(UtilitySection, "Clear Camera Memory Position List", new KeyboardShortcut(KeyCode.Less), "Empties the current Camera Memory Position List");
             raycastDistance = Config.Bind(UtilitySection, "Attachment Raycast Distance", 100f, new ConfigDescription("The distance at which the attachment will look for objects to attach to", new AcceptableValueRange<float>(0.001f, 1000.0f)));
-            RotateUsesSens = Config.Bind(UtilitySection, "Rotation speed inherits Camera Sensitivity", false, "If true, the camera rotation speed is multiplied by the Camera Sensitivity value, otherwise, the camera is rotated by only 1 degree per frame");
+            RotateUsesSens = Config.Bind(UtilitySection, "Rotation speed inherits Camera Sensitivity", false, "If true, the camera rotation speed is multiplied by the Camera Sensitivity value");
             Godmode = Config.Bind(UtilitySection, "God mode", true, "Makes the player unkillable");
             FastMoveMult = Config.Bind(UtilitySection, "Set Fast Movement Multiplier", 2f, new ConfigDescription("The value that the camera movement speed is multiplied by while the move fast key is held", new AcceptableValueRange<float>(0f, 100f)));
-            PlayerFollowCamera = Config.Bind(UtilitySection, "Player Follows Camera (culling)", false, "The player will be put behind the camera so that culling works for the camera pos");
             SelectedAttachType = Config.Bind(UtilitySection, "Attach Type", KappaCamController.attachTypes.lookAt, new ConfigDescription("The attachment type when locking onto objects in game."));
-            // disableCulling = Config.Bind(UtilitySection, "Disable / Enable Culling", false, "Disable the culling on the camera");
+            AttachableCrosshair = Config.Bind(UtilitySection, "Attachable Crosshair", true, "Shows a crosshair to let you know what you will be attaching to");
+
             /// RecordingSection
             BeginRecord = Config.Bind(RecordingSection, "Begin Path Recording", new KeyboardShortcut(KeyCode.LeftBracket), "Begins recording camera movement");
             ResumeRecord = Config.Bind(RecordingSection, "Continue Path Recording", new KeyboardShortcut(KeyCode.Backslash), "Resumes recording and appends it to the previous recording");
@@ -135,9 +131,7 @@ namespace KappaCam
             LookAtDamp = Config.Bind(RecordingSection, "LookAt Smoothing", 0.2f, new ConfigDescription("Smmothing on the camera when you are attached to an object and the \"lookAt\" type is selected. 1 is instant look-at and 0 is mega smooth", new AcceptableValueRange<float>(0.0001f, 0.999f)));
             LookAtEscapeThreshold = Config.Bind(RecordingSection, "LookAt Escape Threshold", 0.1f, new ConfigDescription("Threshold for screen edges, if the attached object is closer to edge, it will keep it in frame. Smaller means closer to edge before correcting.", new AcceptableValueRange<float>(0, 1)));
 
-            /// 
             CreateKeyframe = Config.Bind("Pathing", "Create Keyframe", new KeyboardShortcut(KeyCode.KeypadPlus), "Create a keybind with the smooth pathing");
-
             OverrideGameRestriction = Config.Bind("Unsafe Options", "Override Session Restriction", false, "When enabled, the requirement for the player to be in a session is overridden, allowing access to the main camera whenever it's in use. However, options regarding player values and the such (immune in camera, move player, memory pos etc) are ignored until this option is disabled.\nThis option can result in bugs and artifacts, and while exceptions thrown by the CUS script are automatically handled, EFT is not so well programmed, and may react unpredictably.");
 
 

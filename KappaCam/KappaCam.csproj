@@ -11,7 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Reference Include="Spt.Common">
+    <Reference Include="spt-common">
       <HintPath>$(SolutionDir)dependencies\spt-common.dll</HintPath>
     </Reference>
     <Reference Include="Spt.Reflection">

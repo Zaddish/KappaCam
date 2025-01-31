@@ -1,72 +1,61 @@
-﻿using System.Globalization;
-using UnityEngine;
-using SPT.Reflection.Utils;
-using EFT.UI;
+﻿using EFT.UI;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using UnityEngine;
 
 namespace KappaCam.Menu {
-
-    // thank you SamSWAT <3 u da bestest
-    static class CursorSettings {
-        private static readonly MethodInfo setCursorMethod;
-
-        static CursorSettings() {
-            var cursorType = PatchConstants.EftTypes.Single(x => x.GetMethod("SetCursor") != null);
-            setCursorMethod = cursorType.GetMethod("SetCursor");
-        }
-
-        public static void SetCursor(ECursorType type) {
-            setCursorMethod.Invoke(null, new object[] { type });
-        }
-    }
-
-
-    internal class utils {
+    internal static class utils {
         public static Vector3 Vector3Field(string label, Vector3 value) {
             GUILayout.BeginHorizontal();
-            GUILayout.Label(label, GUILayout.Width(100));
-            value.x = float.Parse(GUILayout.TextField(value.x.ToString(), GUILayout.Width(100)));
-            value.y = float.Parse(GUILayout.TextField(value.y.ToString(), GUILayout.Width(100)));
-            value.z = float.Parse(GUILayout.TextField(value.z.ToString(), GUILayout.Width(100)));
+            if (!string.IsNullOrEmpty(label)) GUILayout.Label(label, GUILayout.Width(100));
+
+            string xStr = GUILayout.TextField(value.x.ToString("F2"), GUILayout.Width(60));
+            string yStr = GUILayout.TextField(value.y.ToString("F2"), GUILayout.Width(60));
+            string zStr = GUILayout.TextField(value.z.ToString("F2"), GUILayout.Width(60));
+
+            float.TryParse(xStr, NumberStyles.Float, CultureInfo.InvariantCulture, out float newX);
+            float.TryParse(yStr, NumberStyles.Float, CultureInfo.InvariantCulture, out float newY);
+            float.TryParse(zStr, NumberStyles.Float, CultureInfo.InvariantCulture, out float newZ);
+
             GUILayout.EndHorizontal();
-            return value;
+            return new Vector3(newX, newY, newZ);
+        }
+
+        public static Color RGBColorField(Color color) {
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("R", GUILayout.Width(20));
+            float r = GUILayout.HorizontalSlider(color.r, 0f, 1f, GUILayout.Width(100));
+            r = Mathf.Clamp(r, 0f, 1f);
+
+            GUILayout.Label("G", GUILayout.Width(20));
+            float g = GUILayout.HorizontalSlider(color.g, 0f, 1f, GUILayout.Width(100));
+            g = Mathf.Clamp(g, 0f, 1f);
+
+            GUILayout.Label("B", GUILayout.Width(20));
+            float b = GUILayout.HorizontalSlider(color.b, 0f, 1f, GUILayout.Width(100));
+            b = Mathf.Clamp(b, 0f, 1f);
+            GUILayout.EndHorizontal();
+
+            return new Color(r, g, b, 1f);
         }
 
         public static Quaternion QuaternionField(string label, Quaternion value) {
             GUILayout.BeginHorizontal();
             GUILayout.Label(label, GUILayout.Width(100));
-            value.x = float.Parse(GUILayout.TextField(value.x.ToString(), GUILayout.Width(100)));
-            value.y = float.Parse(GUILayout.TextField(value.y.ToString(), GUILayout.Width(100)));
-            value.z = float.Parse(GUILayout.TextField(value.z.ToString(), GUILayout.Width(100)));
-            value.w = float.Parse(GUILayout.TextField(value.w.ToString(), GUILayout.Width(100)));
+
+            string xStr = GUILayout.TextField(value.x.ToString("F2"), GUILayout.Width(60));
+            string yStr = GUILayout.TextField(value.y.ToString("F2"), GUILayout.Width(60));
+            string zStr = GUILayout.TextField(value.z.ToString("F2"), GUILayout.Width(60));
+            string wStr = GUILayout.TextField(value.w.ToString("F2"), GUILayout.Width(60));
+
+            float.TryParse(xStr, NumberStyles.Float, CultureInfo.InvariantCulture, out float x);
+            float.TryParse(yStr, NumberStyles.Float, CultureInfo.InvariantCulture, out float y);
+            float.TryParse(zStr, NumberStyles.Float, CultureInfo.InvariantCulture, out float z);
+            float.TryParse(wStr, NumberStyles.Float, CultureInfo.InvariantCulture, out float w);
+
             GUILayout.EndHorizontal();
-            return value;
+            return new Quaternion(x, y, z, w);
         }
-
-        public Vector3 Vector3Field(Vector3 value) {
-            string xStr = GUILayout.TextField(value.x.ToString(), GUILayout.Width(50));
-            string yStr = GUILayout.TextField(value.y.ToString(), GUILayout.Width(50));
-            string zStr = GUILayout.TextField(value.z.ToString(), GUILayout.Width(50));
-            float x = ParseFloat(xStr);
-            float y = ParseFloat(yStr);
-            float z = ParseFloat(zStr);
-            return new Vector3(x, y, z);
-        }
-
-        public static Color RGBColorField(Color color) {
-            float r = GUILayout.HorizontalSlider(color.r, 0.0f, 1.0f);
-            float g = GUILayout.HorizontalSlider(color.g, 0.0f, 1.0f);
-            float b = GUILayout.HorizontalSlider(color.b, 0.0f, 1.0f);
-            return new Color(r, g, b);
-        }
-
-        private float ParseFloat(string value) {
-            if (float.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out float result)) {
-                return result;
-            }
-            return 0f;
-        }
-
     }
 }

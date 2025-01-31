@@ -9,6 +9,7 @@ using MonoMod.RuntimeDetour;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Koenigz.PerfectCulling;
+using UnityEngine.SceneManagement;
 
 namespace KappaCam {
     /// <summary>
@@ -68,9 +69,9 @@ namespace KappaCam {
         bool playingPath = false;
         int currentRecordingIndex = 0;
         GameObject gameCamera;
-        Vector3 MemoryPos;
-        Vector3 currentVelocity = Vector3.zero;
         
+        private Vector3? MemoryPos = null;
+        Vector3 currentVelocity = Vector3.zero;
         Vector2 smoothedMouseDelta;
         Vector2 currentMouseDelta;
         private float totalRotationX = 0f;
@@ -86,10 +87,7 @@ namespace KappaCam {
             orbit,
             parented,
         }
-        // attach specific can be "orbit", "lookAt" and "parented"
-        // orbit = rotate around the object in a linear motion
-        // lookAt just forces the camera to always look at the attached object
-        // parented parents the game camera to the objects transformation
+        
         public static string AttachSpecific = "";
         GameObject AttachedTarget;
 
@@ -109,22 +107,16 @@ namespace KappaCam {
         Player player { get => gameWorld.MainPlayer; }
         GameWorld gameWorld { get => Singleton<GameWorld>.Instance; }
         float MovementSpeed { get => Plugin.MovementSpeed.Value; }
-
-        // Camera stuff
         float CameraSensitivity { get => Plugin.CameraSensitivity.Value; }
         float CameraSmoothing { get => Plugin.CameraSmoothing.Value; }
-        
-        //private Vector3 originalCamPosition;
-        //private Quaternion originalCamRotation;
-        public GameObject camGameObject;
 
         GameObject commonUI { get => MonoBehaviourSingleton<CommonUI>.Instance.gameObject; }
         GameObject preloaderUI { get => MonoBehaviourSingleton<PreloaderUI>.Instance.gameObject; }
         GameObject gameScene { get => MonoBehaviourSingleton<GameUI>.Instance.gameObject; }
 
-        //private DisablerCullingObjectBase[] allCullingObjects;
-        //private List<PerfectCullingBakeGroup> previouslyActiveBakeGroups = new List<PerfectCullingBakeGroup>();
-
+        private bool cullingIsDisabled = false;
+        private DisablerCullingObjectBase[] allDisablerObjects;
+        private readonly List<PerfectCullingBakeGroup> previouslyEnabledBakeGroups = new List<PerfectCullingBakeGroup>();
 
         bool GamespeedChanged {
             get => Time.timeScale != 1f;
@@ -150,50 +142,65 @@ namespace KappaCam {
             get => mCamUnsnapped;
             set {
                 
+                if (SceneManager.GetSceneByName("bunker_2") != null)
+                {
+                    IEnumerable<Behaviour> comps = Camera.main.GetComponentsInChildren<Behaviour>();
+                    foreach (Behaviour comp in comps)
+                    {
+                        string comp_type = comp.GetType().ToString();
+                        Debug.Log(comp_type);
+                        if (comp.GetType().FullName == "Cinemachine.CinemachineBrain")
+                        {
+                            comp.enabled = !value;
+                            break;
+                        }
+                    }
+                }
+
                 if (!value) {
                     if (!Plugin.OverrideGameRestriction.Value) {
                         if (Ready()) {
                             player.PointOfView = EPointOfView.FirstPerson;
                         }
+                        if (Detours.Any())
+                            Detours.ForEach((Detour det) => det.Dispose());
+                        Detours.Clear();
 
-                        if (Detours.Any()) Detours.ForEach((Detour det) => det.Dispose()); Detours.Clear();
                         if (!UIEnabled) {
                             try {
                                 commonUI.SetActive(true);
                                 preloaderUI.SetActive(true);
                                 gameScene.SetActive(true);
-                            } catch (Exception e) { Plugin.logger.LogError($"bruh\n{e}"); }
+                            } catch (Exception e) {
+                                Plugin.logger.LogError($"bruh\n{e}");
+                            }
                             UIEnabled = true;
                         }
-                        Camera.current.fieldOfView = cacheFOV;
+                        Camera.main.fieldOfView = cacheFOV;
                     }
                 } else {
                     if (player != null) {
                         player.PointOfView = EPointOfView.FreeCamera;
                         player.PointOfView = EPointOfView.ThirdPerson;
                     }
-
-                    cacheFOV = Camera.current.fieldOfView;
-                    if (Plugin.OverrideGameRestriction.Value) SendNotification("Session Override is enabled, player and positioning options are ignored, and controlling the camera outside of a raid may cause issues.\nYou've been warned...");
+                    cacheFOV = Camera.main.fieldOfView;
+                    if (Plugin.OverrideGameRestriction.Value)
+                        SendNotification("Session Override is enabled, player and positioning options are ignored, and controlling the camera outside of a raid may cause issues.\nYou've been warned...");
                 }
                 mCamUnsnapped = value;
             }
         }
 
         void OnGUI() {
-            if (CamUnsnapped && UIEnabled) {
+            if (CamUnsnapped && Plugin.AttachableCrosshair.Value) {
                 float crosshairSize = 3;
                 Vector2 centerPoint = new Vector2(Screen.width / 2, Screen.height / 2);
                 GUI.DrawTexture(new Rect(centerPoint.x - (crosshairSize / 2), centerPoint.y - (crosshairSize / 2), crosshairSize, crosshairSize), Texture2D.whiteTexture);
                 GUI.Label(new Rect(centerPoint.x - 50, centerPoint.y + 20, 100, 20), hitObjectName);
             }
         }
-        void Update() {
-            //if (Input.GetKeyDown(KeyCode.C)) {
-            //    allCullingObjects = FindObjectsOfType<DisablerCullingObjectBase>();
-            //    ToggleCulling();
-            //}
 
+        void Update() {
             if (Input.GetKeyDown(Plugin.ToggleCameraSnap.Value.MainKey)) {
 
                 CamUnsnapped = !CamUnsnapped;
@@ -202,31 +209,11 @@ namespace KappaCam {
             if (Input.GetKeyDown(Plugin.CameraMouse.Value.MainKey))
                 CamViewInControl = !CamViewInControl;
 
-            if (Input.GetKeyDown(Plugin.ChangeGamespeed.Value.MainKey) && CamUnsnapped)
+            if (Input.GetKeyDown(Plugin.ChangeGamespeed.Value.MainKey))
                 GamespeedChanged = !GamespeedChanged;
 
             if (Input.GetKeyDown(Plugin.HideUI.Value.MainKey))
                 UIEnabled = !UIEnabled;
-
-            if (CamUnsnapped) {
-                if (Plugin.PlayerFollowCamera.Value && player != null) {
-                    player.Transform.position = gameCamera.transform.position;
-                    player.Transform.rotation = gameCamera.transform.rotation;
-                    GameObject playerMesh = player.gameObject.transform.Find("Player/Mesh").gameObject;
-                    playerMesh.SetActive(false);
-                } 
-            } else {
-                try { 
-                    if (CamViewInControl) {
-                        // if the user changed the value while the camera is still unsnapped
-                        GameObject playerMesh = player.gameObject.transform.Find("Player/Mesh").gameObject;
-                        playerMesh.SetActive(true);
-                    } else {
-                        GameObject playerMesh = player.gameObject.transform.Find("Player/Mesh").gameObject;
-                        playerMesh.SetActive(true);
-                    }
-                } catch { }
-            }
 
             try { if (Plugin.Godmode.Value == true) { player.ActiveHealthController.SetDamageCoeff(Plugin.Godmode.Value ? 0 : player.ActiveHealthController.DamageCoeff != 1 && !playerAirborne ? 1 : 0); } } catch { }
 
@@ -236,9 +223,19 @@ namespace KappaCam {
                 try {
 
                     float fastMove = Input.GetKey(Plugin.FastMove.Value.MainKey) ? Plugin.FastMoveMult.Value : 1f;
-                    gameCamera = Camera.current.gameObject;
+                    gameCamera = Camera.main.gameObject;
 
                     if (!Plugin.OverrideGameRestriction.Value && Ready()) {
+                        if (Input.GetKeyDown(Plugin.disableCulling.Value.MainKey)) {
+                            if (allDisablerObjects == null || allDisablerObjects.Length == 0) {
+                                allDisablerObjects = FindObjectsOfType<DisablerCullingObjectBase>();
+                                if (allDisablerObjects == null || allDisablerObjects.Length == 0) {
+                                    Debug.LogWarning("Could not find any DisablerCullingObjectBase. Are we in a raid?");
+                                    return;
+                                }
+                            }
+                            Helpers.ToggleCulling(ref cullingIsDisabled, allDisablerObjects, previouslyEnabledBakeGroups);
+                        }
 
                         // ------ RECORDING STUFF ------
                         if (PathRecording.Target == null) {
@@ -246,10 +243,10 @@ namespace KappaCam {
                         }
 
                         if (Input.GetKeyDown(Plugin.GoToPos.Value.MainKey)) {
-                            if (MemoryPos == null)
+                            if (!MemoryPos.HasValue)
                                 SendNotification("No memory pos to move camera to.");
                             else
-                                gameCamera.transform.position = MemoryPos;
+                                gameCamera.transform.position = MemoryPos.Value;
                         }
 
                         if (Input.GetKeyDown(Plugin.PlayRecord.Value.MainKey))
@@ -407,14 +404,13 @@ namespace KappaCam {
                     } else {
                         float scrollDelta = -Input.GetAxis("Mouse ScrollWheel");
                         if (scrollDelta != 0) {
-                            float zoomFactor = Mathf.Exp(Plugin.ZoomSpeed.Value * scrollDelta);
+                            float zoomFactor = Mathf.Exp(Plugin.ZoomSpeed.Value);
                             targetFOV *= zoomFactor;
                             targetFOV = Mathf.Clamp(targetFOV, 5, 170);
                         }
                     }
                     currentFOV = Mathf.SmoothDamp(currentFOV, targetFOV, ref zoomVelocity, zoomSmoothTime);
-                    Camera.current.fieldOfView = currentFOV;
-
+                    Camera.main.fieldOfView = currentFOV;
 
                     // ------- ATTACH TO OBJECT -------
                     if (Input.GetKey(Plugin.DetatchCameraFollow.Value.MainKey) && AttachedTarget != null) {
@@ -471,14 +467,14 @@ namespace KappaCam {
                             Vector3 directionToTarget = targetPosition - gameCamera.transform.position;
                             Quaternion targetRotation = Quaternion.LookRotation(directionToTarget);
                             gameCamera.transform.rotation = Quaternion.Lerp(gameCamera.transform.rotation, targetRotation, Plugin.LookAtDamp.Value * Time.deltaTime);
-                            Vector3 viewportPoint = Camera.current.WorldToViewportPoint(targetPosition);
-
-                            bool isNearEdge = viewportPoint.x <= Plugin.LookAtEscapeThreshold.Value || viewportPoint.x >= 1.0f - Plugin.LookAtEscapeThreshold.Value ||
-                                              viewportPoint.y <= Plugin.LookAtEscapeThreshold.Value || viewportPoint.y >= 1.0f - Plugin.LookAtEscapeThreshold.Value;
-
+                            Vector3 viewportPoint = Camera.main.WorldToViewportPoint(targetPosition);
+                            bool isNearEdge = viewportPoint.x <= Plugin.LookAtEscapeThreshold.Value
+                                              || viewportPoint.x >= 1.0f - Plugin.LookAtEscapeThreshold.Value
+                                              || viewportPoint.y <= Plugin.LookAtEscapeThreshold.Value
+                                              || viewportPoint.y >= 1.0f - Plugin.LookAtEscapeThreshold.Value;
                             if (isNearEdge) {
                                 // Adjust the rotation more quickly if the target is near the edge of the screen
-                                float correctionFactor = 1.0f - Mathf.Min(viewportPoint.x, 1.0f - viewportPoint.x, viewportPoint.y, 1.0f - viewportPoint.y) / Plugin.LookAtEscapeThreshold.Value;
+                                float correctionFactor = 1.0f - Mathf.Min(viewportPoint.x, 1.0f - viewportPoint.x,viewportPoint.y, 1.0f - viewportPoint.y)                                                                          / Plugin.LookAtEscapeThreshold.Value;
                                 gameCamera.transform.rotation = Quaternion.Lerp(gameCamera.transform.rotation, targetRotation, correctionFactor * Time.deltaTime);
                             }
 
@@ -525,14 +521,6 @@ namespace KappaCam {
             }
             player.ActiveHealthController.SetDamageCoeff(1);
         }
-
-        //public void ToggleCulling() {
-        //    bool isEnabled = allCullingObjects.Any(co => co.gameObject.activeSelf);
-        //    foreach (var cullingObject in allCullingObjects) {
-        //        cullingObject.gameObject.SetActive(!isEnabled);
-        //    }
-        //}
-
 
         void SendNotification(string message, bool warn = true) => NotificationManagerClass.DisplayMessageNotification(message, ENotificationDurationType.Long, warn ? ENotificationIconType.Alert : ENotificationIconType.Default);
 

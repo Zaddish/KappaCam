@@ -5,6 +5,7 @@ using KappaCam.Menu;
 using KappaCam;
 using EFT.Communications;
 using System;
+using KappaCam.Menu.Components;
 
 namespace KappaCam.Pathing {
     public class PathingMenu : MonoBehaviour {
@@ -16,6 +17,11 @@ namespace KappaCam.Pathing {
         private bool isPaused = false;
         private Vector2 scrollPosition = Vector2.zero;
 
+        void Update() {
+            if (Input.GetKeyDown(Plugin.CreateKeyframe.Value.MainKey)) {
+                pathGenerator.AddKeyframe(Camera.main.transform.position, Camera.main.transform.rotation);
+            }
+        }
 
         public void Menu() {
 
@@ -32,7 +38,7 @@ namespace KappaCam.Pathing {
                         continue;
                     }
                     Camera.main.transform.position = pathGenerator.CalculatePiecewiseBezierPath(t);
-                    Camera.main.transform.rotation = pathGenerator.CalculateBezierQuaternion(t);
+                    Camera.main.transform.rotation = pathGenerator.CalculatePiecewiseBezierQuaternion(t);
                     
                     elapsedTime += Time.deltaTime;
                     t = elapsedTime / duration;
@@ -113,7 +119,16 @@ namespace KappaCam.Pathing {
 
             // Display a slider for adjusting path duration. This affects how quickly the camera moves along the path.
             GUILayout.Label($"Path Duration: {pathGenerator.pathDuration} seconds");
-            pathGenerator.pathDuration = GUILayout.HorizontalSlider(pathGenerator.pathDuration, 1.0f, 3600.0f);
+            bool isDurationChanged = false;
+            AdvancedSlider.Draw(
+                uniqueId: "pathDurationSlider",
+                getter: () => pathGenerator.pathDuration,
+                setter: (val) => pathGenerator.pathDuration = val,
+                minValue: 1.0f,
+                maxValue: 60.0f * 30.0f,
+                isChanged: ref isDurationChanged,
+                sliderMode: SliderMode.Direct
+                );
             GUILayout.BeginHorizontal();
 
             if (GUILayout.Button(pathGenerator.isPathPlaying ? (isPaused ? "Resume Path" : "Pause Path") : "Play Path")) {
